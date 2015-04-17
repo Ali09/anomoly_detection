@@ -1,5 +1,3 @@
-
-from sklearn import datasets
 import numpy as np
 import pdb
 import time
