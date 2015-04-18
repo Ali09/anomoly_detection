@@ -37,9 +37,7 @@ b2 = theta(2*hiddenSize*visibleSize+hiddenSize+1:end);
 % first calculate the regular cost function J
  
 [~, ahidden, output] = getActivation(W1, W2, b1, b2, data);
-errtp = ((output - data) .^ 2);
-error = sum(sum(errtp)) ./ nSamples;
-
+error = (sum((output(:) - data(:)) .^ 2)/sum(data(:).^2))^0.5;
 end
 
 %-------------------------------------------------------------------

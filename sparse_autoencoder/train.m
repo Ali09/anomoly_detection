@@ -35,10 +35,32 @@ display_network(patches(:,randi(size(patches,2),200,1)),8);
 
 addpath mnist
 patches = load_MNIST_images('train-images.idx3-ubyte');
+train_labels = load_MNIST_labels('train-labels.idx1-ubyte');
 %patches = reshape(patches, 28, 28, []);
 %patches = patches(:,:,1:10000);
 num_images = 10000;
 patches = patches(:,1:num_images);
+train_labels = train_labels(1:num_images,:);
+
+% filter patches for specific numbers
+num_filter = [3, 4, 5, 6];
+new_patches = [];
+new_labels = [];
+for i = 1:length(num_filter)
+    new_patches = [new_patches, patches(:,logical((train_labels == num_filter(i))))];
+    new_labels = [new_labels; num_filter(i) * ones(sum(train_labels == num_filter(i)), 1)];
+end
+
+anom_filter = [2, 7];
+anom_patches = [];
+anom_labels = [];
+for i = 1:length(anom_filter)
+    anom_patches = [anom_patches, patches(:,logical((train_labels == anom_filter(i))))];
+    anom_labels = [anom_labels; anom_filter(i) * ones(sum(train_labels == anom_filter(i)), 1)];
+end
+
+patches =  new_patches;
+labels = new_labels;
 
 %  Obtain random parameters theta
 theta = initializeParameters(hiddenSize, visibleSize);
@@ -137,19 +159,20 @@ display_network(W1', 12);
 
 %%======================================================================
 %% STEP 6: Compute reconstruction error on test set
-test_patches = load_MNIST_images('t10k-images.idx3-ubyte');
+%test_patches = load_MNIST_images('t10k-images.idx3-ubyte');
 %patches = reshape(patches, 28, 28, []);
 %patches = patches(:,:,1:10000);
-num_images = 10000;
-test_patches = test_patches(:,1:num_images);
+%num_images = 10000;
+%test_patches = test_patches(:,1:num_images);
 
-[output, error, ahidden] = reconstructionError(opttheta, visibleSize, hiddenSize, test_patches);
+patches = [patches anom_patches];
+[output, error, ahidden] = reconstructionError(opttheta, visibleSize, hiddenSize, patches);
+csvwrite('ahidden_train.txt', ahidden);
+csvwrite('train_images.txt', patches);
+
 % figure, imshow(output(:,1), 28, 28, 1));
 
-for i = 1:10000
-[~, test_error(i), ~] = reconstructionError(opttheta, visibleSize, hiddenSize, test_patches(:,i));
-end
-for i = 1:10000
+for i = 1:length(patches)
 [~, train_error(i), ~] = reconstructionError(opttheta, visibleSize, hiddenSize, patches(:,i));
 end
 
