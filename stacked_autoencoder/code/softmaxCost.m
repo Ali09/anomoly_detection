@@ -43,4 +43,3 @@ thetagrad = (-1/size(data,2)).*(((groundTruth-(M))*data') + (lambda*theta));
 % Unroll the gradient matrices into a vector for minFunc
 grad = [thetagrad(:)];
 end
-

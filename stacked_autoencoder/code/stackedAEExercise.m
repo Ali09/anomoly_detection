@@ -28,29 +28,11 @@ addpath ../data/mnist
 trainData = loadMNISTImages('train-images-idx3-ubyte');
 trainLabels = loadMNISTLabels('train-labels-idx1-ubyte');
 
-num_images = 10000;
+num_images = 5000;
 trainData = trainData(:,1:num_images);
 trainLabels = trainLabels(1:num_images,:);
 
-% filter trainData for specific numbers
-num_filter = [3, 4, 5, 6];
-new_trainData = [];
-new_labels = [];
-for i = 1:length(num_filter)
-    new_trainData = [new_trainData, trainData(:,logical((trainLabels == num_filter(i))))];
-    new_labels = [new_labels; num_filter(i) * ones(sum(trainLabels == num_filter(i)), 1)];
-end
-
-anom_filter = [2, 7];
-anom_trainData = [];
-anom_labels = [];
-for i = 1:length(anom_filter)
-    anom_trainData = [anom_trainData, trainData(:,logical((trainLabels == anom_filter(i))))];
-    anom_labels = [anom_labels; anom_filter(i) * ones(sum(trainLabels == anom_filter(i)), 1)];
-end
-
-trainData =  new_trainData(:,1:end-9);
-trainLabels = new_labels(1:end-9,:);
+trainLabels(trainLabels == 0) = 10;
 
 %%======================================================================
 %% STEP 2: Train the first sparse autoencoder
@@ -147,7 +129,7 @@ saeSoftmaxTheta = 0.005 * randn(hiddenSizeL2 * numClasses, 1);
 %
 %                You should store the optimal parameters in saeSoftmaxOptTheta 
 %
-%{
+
 
 lambda = 1e-4;
 options.maxIter = 10;
@@ -156,7 +138,7 @@ softmaxModel = softmaxTrain(hiddenSizeL2, numClasses, lambda, ...
 
 saeSoftmaxOptTheta = softmaxModel.optTheta(:);
 
-%}
+
 % -------------------------------------------------------------------------
 
 
@@ -175,8 +157,8 @@ stack{2}.b = sae2OptTheta(2*hiddenSizeL2*hiddenSizeL1+1:2*hiddenSizeL2*hiddenSiz
 
 % Initialize the parameters for the deep model
 [stackparams, netconfig] = stack2params(stack);
-%stackedAETheta = [ saeSoftmaxOptTheta ; stackparams ];
-stackedAETheta = stackparams;
+stackedAETheta = [ saeSoftmaxOptTheta ; stackparams ];
+stackedAETheta = stackedAETheta;
 
 %% checkStackedAECost
 
@@ -214,6 +196,25 @@ options.display = 'on';
 testData = loadMNISTImages('t10k-images-idx3-ubyte');
 testLabels = loadMNISTLabels('t10k-labels-idx1-ubyte');
 %}
+
+% filter trainData for specific numbers
+num_filter = [3, 4, 5, 6];
+new_trainData = [];
+new_labels = [];
+for i = 1:length(num_filter)
+    new_trainData = [new_trainData, trainData(:,logical((trainLabels == num_filter(i))))];
+    new_labels = [new_labels; num_filter(i) * ones(sum(trainLabels == num_filter(i)), 1)];
+end
+
+anom_filter = [2, 7];
+anom_trainData = [];
+anom_labels = [];
+for i = 1:length(anom_filter)
+    anom_trainData = [anom_trainData, trainData(:,logical((trainLabels == anom_filter(i))))];
+    anom_labels = [anom_labels; anom_filter(i) * ones(sum(trainLabels == anom_filter(i)), 1)];
+end
+
+
 trainData = [trainData anom_trainData];
 
 [W1, W2, a1, a2, a3] = stackedAEPredict(stackedAETheta, inputSize, hiddenSizeL2, ...
@@ -222,7 +223,7 @@ csvwrite('ahidden1_train.txt', a2);
 csvwrite('ahidden2_train.txt', a3);
 
 for i = 1:length(trainData)
-[~, train_error(i), ~] = reconstructionError(stackedAETheta, inputSize, hiddenSizeL2, trainData(:,i));
+[~, train_error(i), ahidden1, ahidden2] = reconstructionError(stackedAETheta, inputSize, hiddenSizeL2, numClasses, netconfig, trainData(:,i));
 end
 
 [maxError, maxIndexes] = sort(train_error, 'descend');

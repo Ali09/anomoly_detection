@@ -1,4 +1,4 @@
-function [output, error, ahidden] = reconstructionError(theta, visibleSize, hiddenSize, data)
+function [output, error, ahidden1, ahidden2] = reconstructionError(theta, inputSize, hiddenSize, numClasses, netconfig, data)
  
 % visibleSize: the number of input units (probably 64) 
 % hiddenSize: the number of hidden units (probably 25) 
@@ -48,7 +48,7 @@ b2 = reshape(sae2Theta(hiddenSize*hiddenSize+1:hiddenSize*hiddenSize+hiddenSize)
 [nFeatures, nSamples] = size(data);
 % first calculate the regular cost function J
  
-[~, ahidden, output] = getActivation(W1, W2, b1, b2, data);
+[~, ahidden1, ahidden2, output] = getActivation(W1, W2, b1, b2, data);
 error = (sum((output(:) - data(:)) .^ 2)/sum(data(:).^2))^0.5;
 end
 
@@ -65,11 +65,14 @@ end
 %-------------------------------------------------------------------
 % This function return the activation of each layer
 %
-function [ainput, ahidden, aoutput] = getActivation(W1, W2, b1, b2, input)
+function [ainput, ahidden1, ahidden2, aoutput] = getActivation(W1, W2, b1, b2, input)
  
 ainput = input;
-ahidden = bsxfun(@plus, W1 * ainput, b1);
-ahidden = sigmoid(ahidden);
-aoutput = bsxfun(@plus, W2 * ahidden, b2);
+ahidden1 = bsxfun(@plus, W1 * ainput, b1);
+ahidden1 = sigmoid(ahidden1);
+ahidden2 = bsxfun(@plus, W2 * ahidden1, b2);
+ahidden2 = sigmoid(ahidden2);
+aoutput = bsxfun(@plus, W1' * ahidden2, b1);
 aoutput = sigmoid(aoutput);
+
 end
